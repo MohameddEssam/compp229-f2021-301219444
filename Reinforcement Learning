@@ -1,0 +1,488 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyMy8a7L0xEr848OH7j8hCUR",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/MohameddEssam/compp229-f2021-301219444/blob/master/Reinforcement%20Learning\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "hlSdZlAqiF3X"
+      },
+      "outputs": [],
+      "source": [
+        "import tensorflow as tf\n",
+        "import numpy as np\n",
+        "import gym\n",
+        "import math\n",
+        "from PIL import Image\n",
+        "import pygame, sys\n",
+        "from pygame.locals import *\n",
+        "from tensorflow import keras"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install -q swig\n",
+        "!pip install -q gymnasium[box2d]"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MPG3unZiiNZL",
+        "outputId": "64b07113-6803-4845-e0dd-fa532b8e6bf5"
+      },
+      "execution_count": 6,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\u001b[?25l     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m0.0/953.9 kB\u001b[0m \u001b[31m?\u001b[0m eta \u001b[36m-:--:--\u001b[0m\r\u001b[2K     \u001b[91m━\u001b[0m\u001b[91m╸\u001b[0m\u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m41.0/953.9 kB\u001b[0m \u001b[31m1.1 MB/s\u001b[0m eta \u001b[36m0:00:01\u001b[0m\r\u001b[2K     \u001b[91m━━━━━━━━━━━━\u001b[0m\u001b[90m╺\u001b[0m\u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m286.7/953.9 kB\u001b[0m \u001b[31m4.3 MB/s\u001b[0m eta \u001b[36m0:00:01\u001b[0m\r\u001b[2K     \u001b[91m━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[90m╺\u001b[0m\u001b[90m━━━━━━━━━━━━━━━\u001b[0m \u001b[32m583.7/953.9 kB\u001b[0m \u001b[31m5.6 MB/s\u001b[0m eta \u001b[36m0:00:01\u001b[0m\r\u001b[2K     \u001b[91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[90m╺\u001b[0m \u001b[32m931.8/953.9 kB\u001b[0m \u001b[31m6.7 MB/s\u001b[0m eta \u001b[36m0:00:01\u001b[0m\r\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m953.9/953.9 kB\u001b[0m \u001b[31m6.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25h  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Building wheel for box2d-py (setup.py) ... \u001b[?25l\u001b[?25hdone\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "env = gym.make('LunarLander-v2')\n",
+        "\n",
+        "input_shape = env.observation_space.shape[0]\n",
+        "num_actions = env.action_space.n"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "eS_MMdFdkVXi",
+        "outputId": "d2e36987-6644-45d1-9a78-e639e1723064"
+      },
+      "execution_count": 7,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": [
+            "/usr/local/lib/python3.10/dist-packages/gym/core.py:317: DeprecationWarning: \u001b[33mWARN: Initializing wrapper in old step API which returns one bool instead of two. It is recommended to set `new_step_api=True` to use new step API. This will be the default behaviour in future.\u001b[0m\n",
+            "  deprecation(\n",
+            "/usr/local/lib/python3.10/dist-packages/gym/wrappers/step_api_compatibility.py:39: DeprecationWarning: \u001b[33mWARN: Initializing environment in old step API which returns one bool instead of two. It is recommended to set `new_step_api=True` to use new step API. This will be the default behaviour in future.\u001b[0m\n",
+            "  deprecation(\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install pyvirtualdisplay\n",
+        "\n",
+        "!pip install tf-agents[reverb]\n",
+        "\n",
+        "!pip install pyglet xvfbwrapper"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 1000
+        },
+        "id": "ukhtIOjJlsvn",
+        "outputId": "9ea23c1f-5c4c-41b7-cad0-64a06b895485"
+      },
+      "execution_count": 11,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting pyvirtualdisplay\n",
+            "  Downloading PyVirtualDisplay-3.0-py3-none-any.whl (15 kB)\n",
+            "Installing collected packages: pyvirtualdisplay\n",
+            "Successfully installed pyvirtualdisplay-3.0\n",
+            "Collecting tf-agents[reverb]\n",
+            "  Downloading tf_agents-0.18.0-py3-none-any.whl (1.4 MB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m1.4/1.4 MB\u001b[0m \u001b[31m16.5 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hRequirement already satisfied: absl-py>=0.6.1 in /usr/local/lib/python3.10/dist-packages (from tf-agents[reverb]) (1.4.0)\n",
+            "Requirement already satisfied: cloudpickle>=1.3 in /usr/local/lib/python3.10/dist-packages (from tf-agents[reverb]) (2.2.1)\n",
+            "Requirement already satisfied: gin-config>=0.4.0 in /usr/local/lib/python3.10/dist-packages (from tf-agents[reverb]) (0.5.0)\n",
+            "Collecting gym<=0.23.0,>=0.17.0 (from tf-agents[reverb])\n",
+            "  Downloading gym-0.23.0.tar.gz (624 kB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m624.4/624.4 kB\u001b[0m \u001b[31m42.4 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25h  Installing build dependencies ... \u001b[?25l\u001b[?25hdone\n",
+            "  Getting requirements to build wheel ... \u001b[?25l\u001b[?25hdone\n",
+            "  Preparing metadata (pyproject.toml) ... \u001b[?25l\u001b[?25hdone\n",
+            "Requirement already satisfied: numpy>=1.19.0 in /usr/local/lib/python3.10/dist-packages (from tf-agents[reverb]) (1.23.5)\n",
+            "Requirement already satisfied: pillow in /usr/local/lib/python3.10/dist-packages (from tf-agents[reverb]) (9.4.0)\n",
+            "Requirement already satisfied: six>=1.10.0 in /usr/local/lib/python3.10/dist-packages (from tf-agents[reverb]) (1.16.0)\n",
+            "Requirement already satisfied: protobuf>=3.11.3 in /usr/local/lib/python3.10/dist-packages (from tf-agents[reverb]) (3.20.3)\n",
+            "Requirement already satisfied: wrapt>=1.11.1 in /usr/local/lib/python3.10/dist-packages (from tf-agents[reverb]) (1.14.1)\n",
+            "Requirement already satisfied: typing-extensions>=3.7.4.3 in /usr/local/lib/python3.10/dist-packages (from tf-agents[reverb]) (4.5.0)\n",
+            "Collecting pygame==2.1.3 (from tf-agents[reverb])\n",
+            "  Downloading pygame-2.1.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.7 MB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m13.7/13.7 MB\u001b[0m \u001b[31m81.3 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hRequirement already satisfied: tensorflow-probability~=0.22.0 in /usr/local/lib/python3.10/dist-packages (from tf-agents[reverb]) (0.22.0)\n",
+            "Collecting rlds (from tf-agents[reverb])\n",
+            "  Downloading rlds-0.1.8-py3-none-manylinux2010_x86_64.whl (48 kB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m48.4/48.4 kB\u001b[0m \u001b[31m4.3 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hCollecting dm-reverb~=0.13.0 (from tf-agents[reverb])\n",
+            "  Downloading dm_reverb-0.13.0-cp310-cp310-manylinux2014_x86_64.whl (6.4 MB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m6.4/6.4 MB\u001b[0m \u001b[31m90.3 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hRequirement already satisfied: tensorflow~=2.14.0 in /usr/local/lib/python3.10/dist-packages (from tf-agents[reverb]) (2.14.0)\n",
+            "Requirement already satisfied: dm-tree in /usr/local/lib/python3.10/dist-packages (from dm-reverb~=0.13.0->tf-agents[reverb]) (0.1.8)\n",
+            "Requirement already satisfied: portpicker in /usr/local/lib/python3.10/dist-packages (from dm-reverb~=0.13.0->tf-agents[reverb]) (1.5.2)\n",
+            "Requirement already satisfied: gym-notices>=0.0.4 in /usr/local/lib/python3.10/dist-packages (from gym<=0.23.0,>=0.17.0->tf-agents[reverb]) (0.0.8)\n",
+            "Requirement already satisfied: astunparse>=1.6.0 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (1.6.3)\n",
+            "Requirement already satisfied: flatbuffers>=23.5.26 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (23.5.26)\n",
+            "Requirement already satisfied: gast!=0.5.0,!=0.5.1,!=0.5.2,>=0.2.1 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (0.5.4)\n",
+            "Requirement already satisfied: google-pasta>=0.1.1 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (0.2.0)\n",
+            "Requirement already satisfied: h5py>=2.9.0 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (3.9.0)\n",
+            "Requirement already satisfied: libclang>=13.0.0 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (16.0.6)\n",
+            "Requirement already satisfied: ml-dtypes==0.2.0 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (0.2.0)\n",
+            "Requirement already satisfied: opt-einsum>=2.3.2 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (3.3.0)\n",
+            "Requirement already satisfied: packaging in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (23.2)\n",
+            "Requirement already satisfied: setuptools in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (67.7.2)\n",
+            "Requirement already satisfied: termcolor>=1.1.0 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (2.3.0)\n",
+            "Requirement already satisfied: tensorflow-io-gcs-filesystem>=0.23.1 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (0.34.0)\n",
+            "Requirement already satisfied: grpcio<2.0,>=1.24.3 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (1.59.3)\n",
+            "Requirement already satisfied: tensorboard<2.15,>=2.14 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (2.14.1)\n",
+            "Requirement already satisfied: tensorflow-estimator<2.15,>=2.14.0 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (2.14.0)\n",
+            "Requirement already satisfied: keras<2.15,>=2.14.0 in /usr/local/lib/python3.10/dist-packages (from tensorflow~=2.14.0->tf-agents[reverb]) (2.14.0)\n",
+            "Requirement already satisfied: decorator in /usr/local/lib/python3.10/dist-packages (from tensorflow-probability~=0.22.0->tf-agents[reverb]) (4.4.2)\n",
+            "Requirement already satisfied: wheel<1.0,>=0.23.0 in /usr/local/lib/python3.10/dist-packages (from astunparse>=1.6.0->tensorflow~=2.14.0->tf-agents[reverb]) (0.42.0)\n",
+            "Requirement already satisfied: google-auth<3,>=1.6.3 in /usr/local/lib/python3.10/dist-packages (from tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (2.17.3)\n",
+            "Requirement already satisfied: google-auth-oauthlib<1.1,>=0.5 in /usr/local/lib/python3.10/dist-packages (from tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (1.0.0)\n",
+            "Requirement already satisfied: markdown>=2.6.8 in /usr/local/lib/python3.10/dist-packages (from tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (3.5.1)\n",
+            "Requirement already satisfied: requests<3,>=2.21.0 in /usr/local/lib/python3.10/dist-packages (from tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (2.31.0)\n",
+            "Requirement already satisfied: tensorboard-data-server<0.8.0,>=0.7.0 in /usr/local/lib/python3.10/dist-packages (from tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (0.7.2)\n",
+            "Requirement already satisfied: werkzeug>=1.0.1 in /usr/local/lib/python3.10/dist-packages (from tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (3.0.1)\n",
+            "Requirement already satisfied: psutil in /usr/local/lib/python3.10/dist-packages (from portpicker->dm-reverb~=0.13.0->tf-agents[reverb]) (5.9.5)\n",
+            "Requirement already satisfied: cachetools<6.0,>=2.0.0 in /usr/local/lib/python3.10/dist-packages (from google-auth<3,>=1.6.3->tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (5.3.2)\n",
+            "Requirement already satisfied: pyasn1-modules>=0.2.1 in /usr/local/lib/python3.10/dist-packages (from google-auth<3,>=1.6.3->tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (0.3.0)\n",
+            "Requirement already satisfied: rsa<5,>=3.1.4 in /usr/local/lib/python3.10/dist-packages (from google-auth<3,>=1.6.3->tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (4.9)\n",
+            "Requirement already satisfied: requests-oauthlib>=0.7.0 in /usr/local/lib/python3.10/dist-packages (from google-auth-oauthlib<1.1,>=0.5->tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (1.3.1)\n",
+            "Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.10/dist-packages (from requests<3,>=2.21.0->tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (3.3.2)\n",
+            "Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.10/dist-packages (from requests<3,>=2.21.0->tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (3.6)\n",
+            "Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.10/dist-packages (from requests<3,>=2.21.0->tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (2.0.7)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.10/dist-packages (from requests<3,>=2.21.0->tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (2023.11.17)\n",
+            "Requirement already satisfied: MarkupSafe>=2.1.1 in /usr/local/lib/python3.10/dist-packages (from werkzeug>=1.0.1->tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (2.1.3)\n",
+            "Requirement already satisfied: pyasn1<0.6.0,>=0.4.6 in /usr/local/lib/python3.10/dist-packages (from pyasn1-modules>=0.2.1->google-auth<3,>=1.6.3->tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (0.5.1)\n",
+            "Requirement already satisfied: oauthlib>=3.0.0 in /usr/local/lib/python3.10/dist-packages (from requests-oauthlib>=0.7.0->google-auth-oauthlib<1.1,>=0.5->tensorboard<2.15,>=2.14->tensorflow~=2.14.0->tf-agents[reverb]) (3.2.2)\n",
+            "Building wheels for collected packages: gym\n",
+            "  Building wheel for gym (pyproject.toml) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for gym: filename=gym-0.23.0-py3-none-any.whl size=697628 sha256=b6f45342a633b10da9b4a31c5dfcbc93b34bf1f544e6071d8738ad9119777851\n",
+            "  Stored in directory: /root/.cache/pip/wheels/3d/6f/b4/3991d4fae11d0ecb0754c11cc1b4e7745012850da4efaaf0b1\n",
+            "Successfully built gym\n",
+            "Installing collected packages: rlds, pygame, gym, tf-agents, dm-reverb\n",
+            "  Attempting uninstall: pygame\n",
+            "    Found existing installation: pygame 2.5.2\n",
+            "    Uninstalling pygame-2.5.2:\n",
+            "      Successfully uninstalled pygame-2.5.2\n",
+            "  Attempting uninstall: gym\n",
+            "    Found existing installation: gym 0.25.2\n",
+            "    Uninstalling gym-0.25.2:\n",
+            "      Successfully uninstalled gym-0.25.2\n",
+            "Successfully installed dm-reverb-0.13.0 gym-0.23.0 pygame-2.1.3 rlds-0.1.8 tf-agents-0.18.0\n"
+          ]
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "application/vnd.colab-display-data+json": {
+              "pip_warning": {
+                "packages": [
+                  "gym",
+                  "pygame"
+                ]
+              }
+            }
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting pyglet\n",
+            "  Downloading pyglet-2.0.10-py3-none-any.whl (858 kB)\n",
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m858.3/858.3 kB\u001b[0m \u001b[31m11.9 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25hCollecting xvfbwrapper\n",
+            "  Downloading xvfbwrapper-0.2.9.tar.gz (5.6 kB)\n",
+            "  Preparing metadata (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "Building wheels for collected packages: xvfbwrapper\n",
+            "  Building wheel for xvfbwrapper (setup.py) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for xvfbwrapper: filename=xvfbwrapper-0.2.9-py3-none-any.whl size=5009 sha256=8e309bd70b451d88b41ab51390b98458562ebe08a6da4092d760970a9c19e65d\n",
+            "  Stored in directory: /root/.cache/pip/wheels/cb/10/7d/2b7fdffccf837f7d5425931575fbee9caebe2c190931f9058b\n",
+            "Successfully built xvfbwrapper\n",
+            "Installing collected packages: xvfbwrapper, pyglet\n",
+            "Successfully installed pyglet-2.0.10 xvfbwrapper-0.2.9\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import tensorflow as tf\n",
+        "\n",
+        "# Assuming num_actions is the number of possible actions\n",
+        "num_actions = 4\n",
+        "\n",
+        "# Policy Network for DQN\n",
+        "policy_network = tf.keras.models.Sequential([\n",
+        "    tf.keras.layers.Dense(32, activation='relu', input_shape=(input_shape,)),\n",
+        "    tf.keras.layers.Dense(32, activation='relu'),\n",
+        "    tf.keras.layers.Dense(num_actions)  # No activation for Q-values\n",
+        "])\n",
+        "\n",
+        "# Set up the optimizer and loss function\n",
+        "optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)\n",
+        "loss_fn = tf.keras.losses.MeanSquaredError()"
+      ],
+      "metadata": {
+        "id": "spztyrMlkXbh"
+      },
+      "execution_count": 8,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import base64\n",
+        "import imageio\n",
+        "import IPython\n",
+        "import matplotlib.pyplot as plt\n",
+        "import numpy as np\n",
+        "import PIL.Image\n",
+        "import pyvirtualdisplay\n",
+        "import reverb\n",
+        "\n",
+        "import tensorflow as tf\n",
+        "from tf_agents.agents.dqn import dqn_agent\n",
+        "from tf_agents.drivers import py_driver\n",
+        "from tf_agents.environments import suite_gym\n",
+        "from tf_agents.environments import tf_py_environment\n",
+        "from tf_agents.networks import q_network\n",
+        "from tf_agents.policies import py_tf_eager_policy\n",
+        "from tf_agents.replay_buffers import reverb_replay_buffer\n",
+        "from tf_agents.replay_buffers import reverb_utils\n",
+        "from tf_agents.specs import tensor_spec\n",
+        "from tf_agents.trajectories import trajectory\n",
+        "from tf_agents.utils import common\n",
+        "\n",
+        "# Set up a virtual display for rendering OpenAI gym environments.\n",
+        "#display = pyvirtualdisplay.Display(visible=0, size=(1400, 900)).start()\n",
+        "\n",
+        "# Hyperparameters\n",
+        "env_name = \"LunarLander-v2\"\n",
+        "num_iterations = 1000\n",
+        "collect_episodes_per_iteration = 2\n",
+        "replay_buffer_capacity = 10000\n",
+        "fc_layer_params = (100,)\n",
+        "learning_rate = 1e-3\n",
+        "log_interval = 25\n",
+        "num_eval_episodes = 10\n",
+        "eval_interval = 50\n",
+        "\n",
+        "# Environment\n",
+        "env = suite_gym.load(env_name)\n",
+        "\n",
+        "# Convert environments to TensorFlow environments\n",
+        "train_py_env = suite_gym.load(env_name)\n",
+        "eval_py_env = suite_gym.load(env_name)\n",
+        "train_env = tf_py_environment.TFPyEnvironment(train_py_env)\n",
+        "eval_env = tf_py_environment.TFPyEnvironment(eval_py_env)\n",
+        "\n",
+        "# Define Q-network with 4 output layers\n",
+        "fc_layer_params = (100,)\n",
+        "q_net = q_network.QNetwork(\n",
+        "    train_env.observation_spec(),\n",
+        "    train_env.action_spec(),\n",
+        "    fc_layer_params=fc_layer_params\n",
+        ")\n",
+        "\n",
+        "optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)\n",
+        "\n",
+        "train_step_counter = tf.Variable(0)\n",
+        "\n",
+        "# DQN Agent\n",
+        "tf_agent = dqn_agent.DqnAgent(\n",
+        "    train_env.time_step_spec(),\n",
+        "    train_env.action_spec(),\n",
+        "    q_network=q_net,\n",
+        "    optimizer=optimizer,\n",
+        "    td_errors_loss_fn=common.element_wise_squared_loss,\n",
+        "    train_step_counter=train_step_counter\n",
+        ")\n",
+        "tf_agent.initialize()\n",
+        "\n",
+        "# Policies\n",
+        "eval_policy = tf_agent.policy\n",
+        "collect_policy = tf_agent.collect_policy\n",
+        "\n",
+        "# Metrics and Evaluation\n",
+        "def compute_avg_return(environment, policy, num_episodes=10):\n",
+        "    total_return = 0.0\n",
+        "    for _ in range(num_episodes):\n",
+        "        time_step = environment.reset()\n",
+        "        episode_return = 0.0\n",
+        "\n",
+        "        while not time_step.is_last():\n",
+        "            action_step = policy.action(time_step)\n",
+        "            time_step = environment.step(action_step.action)\n",
+        "            episode_return += time_step.reward\n",
+        "\n",
+        "        total_return += episode_return\n",
+        "\n",
+        "    avg_return = total_return / num_episodes\n",
+        "    return avg_return.numpy()[0]\n",
+        "\n",
+        "# Replay Buffer\n",
+        "table_name = 'uniform_table'\n",
+        "replay_buffer_signature = tensor_spec.from_spec(tf_agent.collect_data_spec)\n",
+        "replay_buffer_signature = tensor_spec.add_outer_dim(replay_buffer_signature)\n",
+        "table = reverb.Table(\n",
+        "    table_name,\n",
+        "    max_size=replay_buffer_capacity,\n",
+        "    sampler=reverb.selectors.Uniform(),\n",
+        "    remover=reverb.selectors.Fifo(),\n",
+        "    rate_limiter=reverb.rate_limiters.MinSize(1),\n",
+        "    signature=replay_buffer_signature\n",
+        ")\n",
+        "\n",
+        "reverb_server = reverb.Server([table])\n",
+        "\n",
+        "replay_buffer = reverb_replay_buffer.ReverbReplayBuffer(\n",
+        "    tf_agent.collect_data_spec,\n",
+        "    table_name=table_name,\n",
+        "    sequence_length=2,\n",
+        "    local_server=reverb_server\n",
+        ")\n",
+        "\n",
+        "rb_observer = reverb_utils.ReverbAddEpisodeObserver(\n",
+        "    replay_buffer.py_client,\n",
+        "    table_name,\n",
+        "    replay_buffer_capacity\n",
+        ")\n",
+        "\n",
+        "# Data Collection\n",
+        "def collect_episode(environment, policy, num_episodes):\n",
+        "    driver = py_driver.PyDriver(\n",
+        "        environment,\n",
+        "        py_tf_eager_policy.PyTFEagerPolicy(policy, use_tf_function=True),\n",
+        "        [rb_observer],\n",
+        "        max_episodes=num_episodes\n",
+        "    )\n",
+        "    initial_time_step = environment.reset()\n",
+        "    driver.run(initial_time_step)\n",
+        "\n",
+        "# Training the agent\n",
+        "try:\n",
+        "    %%time\n",
+        "except:\n",
+        "    pass\n",
+        "\n",
+        "tf_agent.train = common.function(tf_agent.train)\n",
+        "\n",
+        "tf_agent.train_step_counter.assign(0)\n",
+        "\n",
+        "avg_return = compute_avg_return(eval_env, tf_agent.policy, num_eval_episodes)\n",
+        "returns = [avg_return]\n",
+        "\n",
+        "for _ in range(num_iterations):\n",
+        "\n",
+        "     #Collect episodes\n",
+        "    collect_episode(train_py_env, tf_agent.collect_policy, collect_episodes_per_iteration)\n",
+        "\n",
+        "     #Use data from the buffer and update the agent's network\n",
+        "    trajectories, _ = next(iterator)\n",
+        "    train_loss = tf_agent.train(experience=trajectories)\n",
+        "\n",
+        "    replay_buffer.clear()\n",
+        "\n",
+        "    step = tf_agent.train_step_counter.numpy()\n",
+        "\n",
+        "    if step % log_interval == 0:\n",
+        "        print('step = {0}: loss = {1}'.format(step, train_loss.loss))\n",
+        "\n",
+        "    if step % eval_interval == 0:\n",
+        "        avg_return = compute_avg_return(eval_env, tf_agent.policy, num_eval_episodes)\n",
+        "        print('step = {0}: Average Return = {1}'.format(step, avg_return))\n",
+        "        returns.append(avg_return)\n",
+        "\n",
+        "# Visualization\n",
+        "# Plot return vs global steps\n",
+        "steps = range(0, num_iterations + 1, eval_interval)\n",
+        "plt.plot(steps, returns)\n",
+        "plt.ylabel('Average Return')\n",
+        "plt.xlabel('Step')\n",
+        "plt.ylim(top=500)  # You may need to adjust the ylim based on the performance\n",
+        "\n",
+        "# Videos\n",
+        "def embed_mp4(filename):\n",
+        "    video = open(filename, 'rb').read()\n",
+        "    b64 = base64.b64encode(video)\n",
+        "    tag = '''\n",
+        "    <video width=\"640\" height=\"480\" controls>\n",
+        "        <source src=\"data:video/mp4;base64,{0}\" type=\"video/mp4\">\n",
+        "    Your browser does not support the video tag.\n",
+        "    </video>'''.format(b64.decode())\n",
+        "\n",
+        "    return IPython.display.HTML(tag)\n",
+        "\n",
+        "num_episodes = 3\n",
+        "video_filename = 'imageio.mp4'\n",
+        "with imageio.get_writer(video_filename, fps=60) as video:\n",
+        "    for _ in range(num_episodes):\n",
+        "        time_step = eval_env.reset()\n",
+        "        video.append_data(eval_py_env.render())\n",
+        "        while not time_step.is_last():\n",
+        "            action_step = tf_agent.policy.action(time_step)\n",
+        "            time_step = eval_env.step(action_step.action)\n",
+        "            video.append_data(eval_py_env.render())\n",
+        "\n",
+        "embed_mp4(video_filename)"
+      ],
+      "metadata": {
+        "id": "p0T4xSCdnHfn"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "TSbMaSJhqBt3"
+      },
+      "execution_count": 22,
+      "outputs": []
+    }
+  ]
+}
